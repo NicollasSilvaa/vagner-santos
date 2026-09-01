@@ -94,13 +94,47 @@ document.addEventListener('DOMContentLoaded', () => {
     modalTitle.textContent = title || 'Projeto de Vídeo';
     modalDesc.textContent = desc || 'Edição audiovisual e storytelling por Vagner Santos.';
 
-    // Inject iframe safely with official Adobe CCV Player
+    let embedSrc = '';
+    
+    // Check if it's a Google Drive link or ID
+    if (videoId.includes('drive.google.com')) {
+      const match = videoId.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || videoId.match(/id=([a-zA-Z0-9_-]+)/);
+      const fileId = match ? match[1] : videoId;
+      embedSrc = `https://drive.google.com/file/d/${fileId}/preview`;
+    } else if (videoId.startsWith('gdrive:')) {
+      const fileId = videoId.replace('gdrive:', '').trim();
+      embedSrc = `https://drive.google.com/file/d/${fileId}/preview`;
+    } else if (videoId.includes('youtube.com') || videoId.includes('youtu.be')) {
+      const ytMatch = videoId.match(/(?:youtu\.be\/|v=|\/embed\/)([a-zA-Z0-9_-]{11})/);
+      const ytId = ytMatch ? ytMatch[1] : videoId;
+      embedSrc = `https://www.youtube.com/embed/${ytId}?autoplay=1`;
+    } else if (videoId.endsWith('.mp4') || videoId.endsWith('.webm') || videoId.startsWith('assets/')) {
+      // Direct video file
+      modalPlayerContainer.innerHTML = `
+        <video controls autoplay playsinline style="width:100%;height:100%;object-fit:contain;background:#000;">
+          <source src="${videoId}" type="video/mp4">
+          Seu navegador não suporta vídeos HTML5.
+        </video>
+      `;
+      videoModal.classList.add('active');
+      videoModal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      return;
+    } else if (videoId.length >= 25 && /^[a-zA-Z0-9_-]+$/.test(videoId)) {
+      // Long alphanumeric ID is typically a Google Drive file ID
+      embedSrc = `https://drive.google.com/file/d/${videoId}/preview`;
+    } else {
+      // Default: Adobe CCV Player
+      embedSrc = `https://www-ccv.adobe.io/v1/player/ccv/${videoId}/embed?bgcolor=%2308080a&lazyLoading=false&api_key=BehancePro2View`;
+    }
+
+    // Inject iframe safely
     modalPlayerContainer.innerHTML = `
       <iframe 
-        src="https://www-ccv.adobe.io/v1/player/ccv/${videoId}/embed?bgcolor=%2308080a&lazyLoading=false&api_key=BehancePro2View" 
+        src="${embedSrc}" 
         title="${title}" 
         frameborder="0" 
-        allow="autoplay; fullscreen; picture-in-picture" 
+        allow="autoplay; fullscreen; picture-in-picture; encrypted-media" 
         allowfullscreen>
       </iframe>
     `;
