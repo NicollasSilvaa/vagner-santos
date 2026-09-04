@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /private/
+Disallow: /.git/
+Disallow: /.env
+
+Sitemap: https://vagner-santos.vercel.app/sitemap.xml
